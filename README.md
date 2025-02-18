@@ -1,6 +1,10 @@
 # Estimation of continuous valence and arousal levels from faces in naturalistic conditions, Nature Machine Intelligence 2021
 
+========================================================
+
 **Go to the bottom for instructions on installing the environment and running the code with a directory**
+
+========================================================
 
 Official implementation of the paper _"Estimation of continuous valence and arousal levels from faces in naturalistic conditions"_, Antoine Toisoul, Jean Kossaifi, Adrian Bulat, Georgios Tzimiropoulos and Maja Pantic, published in Nature Machine Intelligence, January 2021 [[1]](#Citation).
 Work done in collaboration between Samsung AI Center Cambridge and Imperial College London.
@@ -138,6 +142,9 @@ If you use this code, please cite:
 ## License
 
 Code available under a Creative Commons Attribution-Non Commercial-No Derivatives 4.0 International Licence (CC BY-NC-ND) license.
+
+========================================================
+========================================================
 
 ## Conda environment installation
 
