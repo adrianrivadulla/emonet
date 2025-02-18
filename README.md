@@ -1,5 +1,7 @@
 # Estimation of continuous valence and arousal levels from faces in naturalistic conditions, Nature Machine Intelligence 2021
 
+**Go to the bottom for instructions on installing the environment and running the code with a directory**
+
 Official implementation of the paper _"Estimation of continuous valence and arousal levels from faces in naturalistic conditions"_, Antoine Toisoul, Jean Kossaifi, Adrian Bulat, Georgios Tzimiropoulos and Maja Pantic, published in Nature Machine Intelligence, January 2021 [[1]](#Citation).
 Work done in collaboration between Samsung AI Center Cambridge and Imperial College London.
 
@@ -136,3 +138,68 @@ If you use this code, please cite:
 ## License
 
 Code available under a Creative Commons Attribution-Non Commercial-No Derivatives 4.0 International Licence (CC BY-NC-ND) license.
+
+## Conda environment installation
+
+Open Anaconda prompt, navigate to the repo directory and create the recreate the environment with the file provided:
+
+```
+cd /path/to/emonet_repo
+conda env create -f environment.yml
+```
+
+## Running video_dir_processing
+
+Activate the environment
+
+```
+conda activate emonet_env
+```
+
+**TLDR**
+
+Running example:
+
+```
+python video_dir_processing.py
+```
+
+Running with your own data (and optional different output dir):
+
+```
+python video_dir_processing.py --video_dir_path path/to/videodir --output_dir_path path/to_outputdir
+```
+
+**Details on script**
+
+You can inspect the script by typing
+
+```
+python video_dir_processing.py --help
+```
+
+Output
+
+```
+usage: video_dir_processing.py [-h] [--nclasses {5,8}]
+                               [--video_dir_path VIDEO_DIR_PATH]
+                               [--output_dir_path OUTPUT_DIR_PATH]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --nclasses {5,8}      Number of emotional classes to test the model on.
+                        Please use 5 or 8.
+  --video_dir_path VIDEO_DIR_PATH
+                        Path to directory containing .mp4 videos to process.
+  --output_dir_path OUTPUT_DIR_PATH
+                        Path to directory where output videos and analysis
+                        .csvs will be saved.
+```
+
+
+The script uses the 8-class emonet model by default. Run the script providing the directory where the .mp4 videos to be processed are stored using the --video_dir_path flag.
+The output videos and files will be saved in the same input directory by default. 
+You can set an output dir of your choice using the --output_dir_path flag should you need it to be different to the input one.
+
+If you don't provide any flags, the script will use the videos in the example_videos directory.
+You could replace the videos in this directory with your own ones but I would recommend leaving this as is and providing the directory when calling the script.

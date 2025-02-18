@@ -7,10 +7,13 @@ import torch
 from torch import nn
 from skimage import io
 from face_alignment.detection.sfd.sfd_detector import SFDDetector
-
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from emonet.models import EmoNet
 
 import cv2
+import pandas as pd
 
 
 def load_video(video_path: Path) -> List[np.ndarray]:
@@ -18,6 +21,8 @@ def load_video(video_path: Path) -> List[np.ndarray]:
     Loads a video using OpenCV.
     """
     video_capture = cv2.VideoCapture(video_path)
+
+
 
     list_frames_rgb = []
 
@@ -31,7 +36,13 @@ def load_video(video_path: Path) -> List[np.ndarray]:
         image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         list_frames_rgb.append(image_rgb)
 
-    return list_frames_rgb
+    # Get fps
+    fps = video_capture.get(cv2.CAP_PROP_FPS)
+
+    # Get video length in seconds
+    video_len_s = len(list_frames_rgb) / fps
+
+    return video_len_s, list_frames_rgb
 
 
 def load_emonet(n_expression: int, device: str):
@@ -61,6 +72,7 @@ def run_emonet(
     Runs the emotion recognition model on a single frame.
     """
     # Resize image to (256,256)
+    print(f"Running emonet on a frame of size {frame_rgb.shape}")
     image_rgb = cv2.resize(frame_rgb, (image_size, image_size))
 
     # Load image into a tensor: convert to RGB, and put the tensor in the [0;1] range
@@ -192,6 +204,8 @@ def make_visualization(
 
 if __name__ == "__main__":
 
+    matplotlib.use("Qt5Agg")
+
     torch.backends.cudnn.benchmark = True
 
     # Parse arguments
@@ -209,14 +223,24 @@ if __name__ == "__main__":
         default="video.mp4",
         help="Path to a video.",
     )
+
+    # get input file name from parser
+    args = parser.parse_args()
+    filename = args.video_path
+    filename = filename.split('.')[0]
+
     parser.add_argument(
         "--output_path",
         type=str,
-        default="output.mp4",
+        default=f"{filename}_emonet_output.mp4",
         help="Path where the output video is saved.",
     )
 
     args = parser.parse_args()
+
+    # # Set args for the demo
+    # args.video_path = r'C:\Users\Usuario\Desktop\Postdoc\Projects\FacialEmotionRecognition\emonet\example_multiple_faces.mp4'
+    # args.output_path = r'C:\Users\Usuario\Desktop\Postdoc\Projects\FacialEmotionRecognition\emonet\example_multiple_faces_emonet_output.mp4'
 
     # Parameters of the experiments
     n_expression = args.nclasses
@@ -241,7 +265,10 @@ if __name__ == "__main__":
 
     print(f"Loading video")
     video_path = Path(__file__).parent / args.video_path
-    list_frames_rgb = load_video(video_path)
+    video_len_s, list_frames_rgb = load_video(video_path)
+
+    # Create a nan array of shape (n_frames, n_classes)
+    emotion_prediction_output = np.ones((len(list_frames_rgb), n_expression + 2)) * np.nan
 
     visualization_frames = []
 
@@ -258,12 +285,23 @@ if __name__ == "__main__":
             bbox = np.array(detected_faces[0]).astype(np.int32)
 
             face_crop = frame[bbox[1] : bbox[3], bbox[0] : bbox[2], :]
+
             emotion_prediction = run_emonet(emonet, face_crop.copy())
 
             visualization_bgr = make_visualization(
                 frame.copy(), face_crop.copy(), bbox, emotion_prediction
             )
             visualization_frames.append(visualization_bgr)
+
+            # Save the emotion prediction
+            emotion_prediction_output[i, :-2] = nn.functional.softmax(
+                emotion_prediction["expression"], dim=1
+            ).cpu().numpy()
+
+            # Save arousal and valence values
+            emotion_prediction_output[i, -2] = emotion_prediction["arousal"].cpu().numpy()
+            emotion_prediction_output[i, -1] = emotion_prediction["valence"].cpu().numpy()
+
         else:
             # Visualization without emotion
             visualization = np.zeros(
@@ -283,10 +321,27 @@ if __name__ == "__main__":
 
         out = cv2.VideoWriter(
             save_path,
-            -1,
+            cv2.VideoWriter_fourcc(*'mp4v'),
             24.0,
             (visualization_frames[0].shape[1], visualization_frames[0].shape[0]),
         )
 
         for frame in visualization_frames:
             out.write(frame)
+
+        out.release()
+
+    # Write the emotion predictions
+    emotion_names = [emotion_classes[i] for i in range(n_expression)]
+    df = pd.DataFrame(emotion_prediction_output, columns=[emotion_names + ["arousal", "valence"]])
+
+    # Add frame column at the start
+    df.insert(0, 't', range(len(df)))
+
+    # Make t column time in seconds
+    df['t'] = df['t'] * (video_len_s / len(df))
+
+    df.to_csv(save_path.with_suffix('.csv'), index=False, float_format='%.4f')
+
+    print(f"Finished. Video saved at {save_path}")
+    print(f"Emotion predictions saved at {save_path.with_suffix('.csv')}")
