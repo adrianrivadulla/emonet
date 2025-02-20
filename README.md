@@ -163,7 +163,19 @@ Activate the environment
 conda activate emonet_env
 ```
 
-**TLDR**
+## Install cuda-enabled pytorch
+
+You might need to do this manually depending on your gpu and cuda version. The command that worked last time we tried (20/02/2025) on Damien's PC with CUDA 12.4 was:
+
+```
+pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
+```
+
+**Note** that you might be able to get away with a pytorch for cpu installation if you change the script to run face_alignment with cpu. Open the scipt, Ctr-F cuda, uncomment the line saying 
+
+device = 'cpu'
+
+## TLDR
 
 Running example:
 

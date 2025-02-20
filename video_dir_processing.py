@@ -242,6 +242,7 @@ if __name__ == "__main__":
     # Parameters of the experiments
     n_expression = args.nclasses
     device = "cuda:0"
+    # device = 'cpu'
     image_size = 256
     emotion_classes = {
         0: "Neutral",
